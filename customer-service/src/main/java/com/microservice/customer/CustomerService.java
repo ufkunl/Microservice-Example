@@ -10,12 +10,13 @@ import org.springframework.web.client.RestTemplate;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
-    private final RestTemplate restTemplate;
+
+    private final FraudClient fraudClient;
 
     @Autowired
-    public CustomerService(CustomerRepository customerRepository, RestTemplate restTemplate) {
+    public CustomerService(CustomerRepository customerRepository, FraudClient fraudClient) {
         this.customerRepository = customerRepository;
-        this.restTemplate = restTemplate;
+        this.fraudClient = fraudClient;
     }
 
     public void registerCustomer(CustomerRegistrationRequest customerRegistrationRequest) {
@@ -32,8 +33,7 @@ public class CustomerService {
         //todo: check if email valid
         //todo: check if email not taken
 
-        FraudCheckResponse response = restTemplate.getForObject("http://localhost:8080/fraud/check/{customerId}",
-                FraudCheckResponse.class, customer.getId());
+        FraudCheckResponse response = fraudClient.isFraudulentCustomer(customer.getId());
         if (response != null && response.getIsFraudster()){
             throw new IllegalStateException("fraudster");
         }
