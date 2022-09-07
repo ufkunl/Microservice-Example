@@ -11,6 +11,7 @@
         <module>fraud-service</module>
         <module>eureka-server</module>
         <module>api-gateway</module>
+        <module>notification-service</module>
     </modules>
     <name>Microservice-BE</name>
     <description>MMicroservice-BE</description>
