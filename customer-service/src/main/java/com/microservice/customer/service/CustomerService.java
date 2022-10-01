@@ -1,10 +1,11 @@
 package com.microservice.customer.service;
 
-import com.microservice.customer.dto.CustomerRegistrationRequest;
-import com.microservice.customer.dto.FraudCheckResponse;
-import com.microservice.customer.client.FraudClient;
-import com.microservice.customer.dto.KafkaNotification;
+import com.microservice.customer.client.fraud.FraudClient;
+import com.microservice.customer.client.fraud.domain.FraudCheckClientDetailResponse;
+import com.microservice.customer.client.fraud.domain.FraudCheckClientResponse;
+import com.microservice.customer.dto.*;
 import com.microservice.customer.entity.Customer;
+import com.microservice.customer.exception.CustomerNotFoundException;
 import com.microservice.customer.repository.CustomerRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,28 +39,49 @@ public class CustomerService {
 
     public void registerCustomer(CustomerRegistrationRequest customerRegistrationRequest) {
 
+
+        FraudCheckClientDetailResponse response = fraudClient.isFraudster(customerRegistrationRequest.getEmail());
+
+//        if (response.getIsFraudster()) {
+//            throw new IllegalStateException("fraudster");
+//        }
+
         Customer customer = Customer.builder()
                 .firstName(customerRegistrationRequest.getFirstName())
                 .lastName(customerRegistrationRequest.getLastName())
                 .email(customerRegistrationRequest.getEmail())
+                .removed(false)
                 .build();
 
         customerRepository.saveAndFlush(customer);
+
+//        FraudChangeRequest request = new FraudChangeRequest();
+//        request.setEmail(customer.getEmail());
+//        request.setIsFraud(false);
+//        fraudClient.changeFraudStatus(request);
 
         log.info("new customer registration {}", customerRegistrationRequest);
         //todo: check if email valid
         //todo: check if email not taken
 
-        FraudCheckResponse response = fraudClient.isFraudulentCustomer(customer.getId());
-        if (response != null && response.getIsFraudster()){
-            throw new IllegalStateException("fraudster");
-        }
+
         sendNotification(customer.getEmail());
     }
 
+    public void complainCustomer(ComplainCustomerRequest request) throws CustomerNotFoundException {
+        Customer customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found."));
+        customer.setRemoved(true);
+        customerRepository.save(customer);
 
-    private void sendNotification(String mail){
-        try{
+//        FraudChangeRequest fraudChangeRequest = new FraudChangeRequest();
+//        fraudChangeRequest.setIsFraud(true);
+//        fraudChangeRequest.setEmail(customer.getEmail());
+//        fraudClient.changeFraudStatus(fraudChangeRequest);
+    }
+
+    private void sendNotification(String mail) {
+        try {
             //KafkaMessage nesnesini queue ya kafkaTemplate ile gönderiyor.
             KafkaNotification kafkaNotification = new KafkaNotification();
             kafkaNotification.setContent("Üyeliğiniz başarılı bir şekilde yapıldı.");
@@ -78,8 +100,8 @@ public class CustomerService {
                     log.error("Unable to send message=[{}] due to : {}", kafkaNotification.getContent(), ex.getMessage());
                 }
             });
-        }catch (Exception e){
-            log.error("Kafka send error: {}",e.getMessage());
+        } catch (Exception e) {
+            log.error("Kafka send error: {}", e.getMessage());
         }
 
     }

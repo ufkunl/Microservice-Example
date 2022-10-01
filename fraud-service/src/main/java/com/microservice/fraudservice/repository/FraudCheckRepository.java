@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface FraudCheckRepository extends JpaRepository<FraudCheckHistory,String> {
+
+    FraudCheckHistory findByEmail(String email);
+
 }

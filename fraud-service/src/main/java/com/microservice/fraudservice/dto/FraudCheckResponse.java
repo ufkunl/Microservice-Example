@@ -5,8 +5,8 @@ import lombok.Data;
 
 @Data
 @Builder
-public class FraudCheckResponse {
+public class FraudCheckResponse{
 
-    private Boolean isFraudster;
+    private boolean isFraudster;
 
 }
