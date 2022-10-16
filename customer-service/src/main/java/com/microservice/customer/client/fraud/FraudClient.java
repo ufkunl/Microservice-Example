@@ -1,9 +1,12 @@
 package com.microservice.customer.client.fraud;
 
-import com.microservice.customer.client.fraud.domain.FraudCheckClientDetailResponse;
+import com.microservice.customer.dto.FraudChangeRequest;
+import com.microservice.customer.dto.FraudCheckResponse;
 
 public interface FraudClient {
 
-    FraudCheckClientDetailResponse isFraudster(String email);
+    FraudCheckResponse isFraudster(String email);
+
+    Void changeFraudStatus(FraudChangeRequest fraudChangeRequest);
 
 }

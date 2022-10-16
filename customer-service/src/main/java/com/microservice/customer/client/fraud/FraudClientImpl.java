@@ -2,45 +2,60 @@ package com.microservice.customer.client.fraud;
 
 import com.microservice.coreservice.dto.RestResponse;
 import com.microservice.coreservice.enums.RestResponseCode;
-import com.microservice.customer.client.fraud.domain.FraudCheckClientDetailResponse;
-import com.microservice.customer.client.fraud.domain.FraudCheckClientRequest;
-import com.microservice.customer.client.fraud.domain.FraudCheckClientResponse;
+import com.microservice.customer.dto.FraudChangeRequest;
+import com.microservice.customer.dto.FraudCheckRequest;
+import com.microservice.customer.dto.FraudCheckResponse;
 import com.microservice.customer.exception.CustomerException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
 public class FraudClientImpl implements FraudClient {
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final FraudFeignClient fraudClient;
+    private static final String FRAUD_INTEGRATION_ERROR = "FRAUD Integration Error ";
 
-    private static final String url = "http://localhost:8080/fraud";
-    private static final String CHECK_FRAUD = "/check";
+    public FraudClientImpl(FraudFeignClient fraudClient) {
+        this.fraudClient = fraudClient;
+    }
 
     @Override
-    public FraudCheckClientDetailResponse isFraudster(String email) {
+    public FraudCheckResponse isFraudster(String email) {
+        FraudCheckRequest request = new FraudCheckRequest();
+        request.setEmail(email);
         try {
-            FraudCheckClientRequest request = new FraudCheckClientRequest();
-            request.setEmail(email);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<FraudCheckClientRequest> requestEntity = new HttpEntity<>(request, headers);
+            RestResponse<FraudCheckResponse> response = fraudClient.isFraudster(request);
+            if (response.getResultCode().getCode().equals(RestResponseCode.SUCCESS.getCode())) {
+                return response.getData();
+            } else {
+                throw new CustomerException(RestResponseCode.FRAUD_INTEGRATION_ERROR);
+            }
+        }catch (CustomerException e){
+            log.error(FRAUD_INTEGRATION_ERROR, e);
+            throw e;
+        }catch (Exception e) {
+            log.error(FRAUD_INTEGRATION_ERROR, e);
+            throw new CustomerException(RestResponseCode.FRAUD_INTEGRATION_ERROR);
+        }
+    }
 
-            ResponseEntity<RestResponse<FraudCheckClientDetailResponse>> response = restTemplate.exchange(url + CHECK_FRAUD, HttpMethod.POST, requestEntity, new ParameterizedTypeReference<>() {});
-
-            if (response.getBody().getResultCode().equals(RestResponseCode.SUCCESS.getCode()))
-                throw new CustomerException(RestResponseCode.CUSTOMER_FRAUD_ERROR);
-
-            return response.getBody().getData();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new CustomerException(RestResponseCode.CUSTOMER_FRAUD_ERROR);
+    @Override
+    public Void changeFraudStatus(FraudChangeRequest fraudChangeRequest) {
+        try{
+            RestResponse<Void> response = fraudClient.changeFraudStatus(fraudChangeRequest);
+            if (response.getResultCode().getCode().equals(RestResponseCode.SUCCESS.getCode())) {
+                return response.getData();
+            } else {
+                throw new CustomerException(RestResponseCode.FRAUD_INTEGRATION_ERROR, response.getResultCode().getMessage());
+            }
+        }catch (CustomerException e){
+            log.error(FRAUD_INTEGRATION_ERROR, e);
+            throw e;
+        }catch (Exception e) {
+            log.error(FRAUD_INTEGRATION_ERROR, e);
+            throw new CustomerException(RestResponseCode.FRAUD_INTEGRATION_ERROR);
         }
     }
 }

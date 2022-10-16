@@ -6,16 +6,17 @@ import lombok.*;
 @Getter
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
 @Data
+@AllArgsConstructor
 public class RestResponse<T> {
 
+    @NonNull
     private RestResponseCode resultCode;
-    private transient T data;
+    private T data;
 
-//    public RestResponse(RestResponseCode resultCode, T data) {
-//        this.resultCode = resultCode;
-//        this.data = data;
-//    }
+    public RestResponse(@NonNull RestResponseCode resultCode) {
+        this.resultCode = resultCode;
+    }
+
 }
 

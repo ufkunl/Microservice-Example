@@ -1,8 +1,9 @@
 package com.microservice.fraudservice.service;
 
+import com.microservice.coreservice.enums.RestResponseCode;
 import com.microservice.fraudservice.dto.FraudCheckResponse;
 import com.microservice.fraudservice.entity.FraudCheckHistory;
-import com.microservice.fraudservice.exception.FraudHistoryNotFoundException;
+import com.microservice.fraudservice.exception.FraudException;
 import com.microservice.fraudservice.repository.FraudCheckRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,10 @@ public class FraudService {
         this.fraudCheckRepository = fraudCheckRepository;
     }
 
-    public FraudCheckResponse isFraudulentCustomer(String email) throws FraudHistoryNotFoundException {
+    public FraudCheckResponse isFraudulentCustomer(String email) throws FraudException {
         FraudCheckHistory fraudCheckHistory = fraudCheckRepository.findByEmail(email);
         if(fraudCheckHistory == null){
-            throw new FraudHistoryNotFoundException("Info not found.");
+            return FraudCheckResponse.builder().isFraudster(false).build();
         }
         return FraudCheckResponse.builder().isFraudster(fraudCheckHistory.getIsFraudster()).build();
     }
