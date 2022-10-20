@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          lower-case-service-id: true
+          enabled: false
+      routes:
+        - id: fraud-service
+          uri: lb://fraud-service
+          predicates:
+            - Path=/fraud/**
+          filters:
+            - RewritePath=/fraud(?<segment>/?.*), /${segment}
+        - id: customer-service
+          uri: lb://customer-service
+          predicates:
+              - Path=/customer/**
+          filters:
+              - RewritePath=/customer(?<segment>/?.*), /${segment}
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/notification/**
+          filters:
+            - RewritePath=/notification(?<segment>/?.*), /${segment}
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL}
+    fetch-registry: true
+    register-with-eureka: true
+
+

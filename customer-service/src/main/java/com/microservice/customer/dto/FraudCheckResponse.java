@@ -4,7 +4,5 @@ import lombok.Data;
 
 @Data
 public class FraudCheckResponse {
-
-    private Boolean isFraudster;
-
+    private boolean isFraudster;
 }

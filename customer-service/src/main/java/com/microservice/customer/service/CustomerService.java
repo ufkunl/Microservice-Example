@@ -1,10 +1,10 @@
 package com.microservice.customer.service;
 
-import com.microservice.customer.dto.CustomerRegistrationRequest;
-import com.microservice.customer.dto.FraudCheckResponse;
-import com.microservice.customer.client.FraudClient;
-import com.microservice.customer.dto.KafkaNotification;
+import com.microservice.coreservice.enums.RestResponseCode;
+import com.microservice.customer.client.fraud.FraudClient;
+import com.microservice.customer.dto.*;
 import com.microservice.customer.entity.Customer;
+import com.microservice.customer.exception.CustomerException;
 import com.microservice.customer.repository.CustomerRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,6 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final FraudClient fraudClient;
 
-
     @Autowired
     public CustomerService(KafkaTemplate<String, KafkaNotification> kafkaTemplate, CustomerRepository customerRepository, FraudClient fraudClient) {
         this.kafkaTemplate = kafkaTemplate;
@@ -38,49 +37,69 @@ public class CustomerService {
 
     public void registerCustomer(CustomerRegistrationRequest customerRegistrationRequest) {
 
+        FraudCheckResponse response = fraudClient.isFraudster(customerRegistrationRequest.getEmail());
+        if (response.isFraudster()) {
+            throw new CustomerException(RestResponseCode.FRAUD_CUSTOMER_ERROR);
+        }
         Customer customer = Customer.builder()
                 .firstName(customerRegistrationRequest.getFirstName())
                 .lastName(customerRegistrationRequest.getLastName())
                 .email(customerRegistrationRequest.getEmail())
+                .removed(false)
                 .build();
 
         customerRepository.saveAndFlush(customer);
+
+        FraudChangeRequest request = new FraudChangeRequest();
+        request.setEmail(customer.getEmail());
+        request.setIsFraud(false);
+        fraudClient.changeFraudStatus(request);
 
         log.info("new customer registration {}", customerRegistrationRequest);
         //todo: check if email valid
         //todo: check if email not taken
 
-        FraudCheckResponse response = fraudClient.isFraudulentCustomer(customer.getId());
-        if (response != null && response.getIsFraudster()){
-            throw new IllegalStateException("fraudster");
-        }
-        sendNotification(customer.getEmail());
+        NotificationRequest notification = new NotificationRequest();
+        notification.setContent("Üyeliğiniz başarılı bir şekilde yapıldı.");
+        notification.setTitle("Hoşgeldiniz.");
+        notification.setMail(customer.getEmail());
+        sendNotification(notification);
     }
 
+    public void complainCustomer(ComplainCustomerRequest request) {
+        Customer customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new CustomerException(RestResponseCode.CUSTOMER_NOT_FOUND));
+        customer.setRemoved(true);
+        customerRepository.save(customer);
 
-    private void sendNotification(String mail){
-        try{
+        FraudChangeRequest fraudChangeRequest = new FraudChangeRequest();
+        fraudChangeRequest.setIsFraud(true);
+        fraudChangeRequest.setEmail(customer.getEmail());
+        fraudClient.changeFraudStatus(fraudChangeRequest);
+    }
+
+    private void sendNotification(NotificationRequest notification) {
+        try {
             //KafkaMessage nesnesini queue ya kafkaTemplate ile gönderiyor.
             KafkaNotification kafkaNotification = new KafkaNotification();
-            kafkaNotification.setContent("Üyeliğiniz başarılı bir şekilde yapıldı.");
-            kafkaNotification.setTitle("Hoşgeldiniz.");
-            kafkaNotification.setEmail(mail);
+            kafkaNotification.setContent(notification.getContent());
+            kafkaNotification.setTitle(notification.getTitle());
+            kafkaNotification.setEmail(notification.getMail());
             UUID messageUUID = UUID.randomUUID(); //Kuyrukta ilgili mesaja key setledim.
             ListenableFuture<SendResult<String, KafkaNotification>> future = kafkaTemplate.send(kafkaTopic, messageUUID.toString(), kafkaNotification);
             future.addCallback(new ListenableFutureCallback<SendResult<String, KafkaNotification>>() {
                 @Override
                 public void onSuccess(SendResult<String, KafkaNotification> result) {
-                    log.info("Sent message=[{}] with offset=[{}}]", kafkaNotification.getContent(), result.getRecordMetadata().offset());
+                    log.info("Sent message={}", kafkaNotification.getContent());
                 }
 
                 @Override
                 public void onFailure(Throwable ex) {
-                    log.error("Unable to send message=[{}] due to : {}", kafkaNotification.getContent(), ex.getMessage());
+                    log.error("Unable to send message={}", kafkaNotification.getContent());
                 }
             });
-        }catch (Exception e){
-            log.error("Kafka send error: {}",e.getMessage());
+        } catch (Exception e) {
+            log.error("Kafka send error: {}", e.getMessage());
         }
-
     }
 }

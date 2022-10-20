@@ -1,6 +1,9 @@
 package com.microservice.fraudservice.service;
 
+import com.microservice.coreservice.enums.RestResponseCode;
+import com.microservice.fraudservice.dto.FraudCheckResponse;
 import com.microservice.fraudservice.entity.FraudCheckHistory;
+import com.microservice.fraudservice.exception.FraudException;
 import com.microservice.fraudservice.repository.FraudCheckRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,13 +22,25 @@ public class FraudService {
         this.fraudCheckRepository = fraudCheckRepository;
     }
 
-    public boolean isFraudulentCustomer(String customerId){
-        fraudCheckRepository.save(FraudCheckHistory.builder()
-                .customerId(customerId)
-                .isFraudster(false)
-                .createdAt(LocalDateTime.now()).build());
-        log.info("fraud check request for customer {}",customerId);
-        return false;
+    public FraudCheckResponse isFraudulentCustomer(String email) throws FraudException {
+        FraudCheckHistory fraudCheckHistory = fraudCheckRepository.findByEmail(email);
+        if(fraudCheckHistory == null){
+            return FraudCheckResponse.builder().isFraudster(false).build();
+        }
+        return FraudCheckResponse.builder().isFraudster(fraudCheckHistory.getIsFraudster()).build();
+    }
+
+    public void changeFraudStatus(String email, Boolean isFraud) {
+        FraudCheckHistory fraudCheckHistory = fraudCheckRepository.findByEmail(email);
+        if(fraudCheckHistory == null){
+            fraudCheckHistory = new FraudCheckHistory();
+            fraudCheckHistory.setIsFraudster(isFraud);
+            fraudCheckHistory.setCreatedAt(LocalDateTime.now());
+            fraudCheckHistory.setEmail(email);
+            fraudCheckRepository.save(fraudCheckHistory);
+        }
+        fraudCheckHistory.setIsFraudster(isFraud);
+        fraudCheckRepository.save(fraudCheckHistory);
     }
 
 }

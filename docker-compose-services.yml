@@ -1,0 +1,103 @@
+networks:
+  mynetwork:
+    name: "mynetwork"
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.5.0.0/16
+          ip_range: 10.5.0.0/24
+          gateway: 10.5.0.1
+          aux_addresses:
+            kafka: 10.5.0.2
+            zookeeper: 10.5.0.3
+services:
+  # <-- Eureka -->
+  eureka:
+    container_name: eureka-service
+    build: ./eureka-server
+    image: eureka-service
+    networks:
+      - "mynetwork"
+    ports:
+      - 8761:8761
+    expose:
+      - 8761
+    restart: always
+
+  # <-- Api Gateway -->
+  api-gateway:
+    container_name: api-gateway
+    build: ./api-gateway
+    image: api-gateway-image
+    ports:
+      - 8080:8080
+    expose:
+      - 8080
+    networks:
+      - "mynetwork"
+    restart: always
+    environment:
+      - EUREKA_URL=http://eureka:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+
+  # <-- Notification -->
+  notification:
+    container_name: notification-service
+    build: ./notification-service
+    image: notification-image
+    ports:
+      - 8083:8083
+    expose:
+      - 8083
+    networks:
+      - "mynetwork"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/notification
+      - SPRING_DATASOURCE_USERNAME=ufkunl
+      - SPRING_DATASOURCE_PASSWORD=password
+      - KAFKA_ADDRESS=http://kafka:9092
+      - EUREKA_URL=http://eureka:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+
+  # <-- FRAUD -->
+  fraud:
+    container_name: fraud-service
+    build: ./fraud-service
+    image: fraud-image
+    ports:
+      - 8082:8082
+    expose:
+      - 8082
+    networks:
+      - "mynetwork"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/fraud
+      - SPRING_DATASOURCE_USERNAME=ufkunl
+      - SPRING_DATASOURCE_PASSWORD=password
+      - KAFKA_ADDRESS=http://kafka:9092
+      - EUREKA_URL=http://eureka:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+
+#  # <-- CUSTOMER -->
+  customer:
+    container_name: customer-service
+    build: ./customer-service
+    image: customer-image
+    ports:
+      - 8081:8081
+    expose:
+      - 8081
+    networks:
+      - "mynetwork"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/customer
+      - SPRING_DATASOURCE_USERNAME=ufkunl
+      - SPRING_DATASOURCE_PASSWORD=password
+      - KAFKA_ADDRESS=http://kafka:9092
+      - EUREKA_URL=http://eureka:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+
+volumes:
+  postgres:
+  pgadmin:

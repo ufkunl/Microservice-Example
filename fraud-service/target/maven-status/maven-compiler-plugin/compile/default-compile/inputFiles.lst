@@ -1,6 +1,11 @@
-C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\FraudCheckRepository.java
-C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\FraudCheckHistory.java
-C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\FraudService.java
-C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\FraudCheckResponse.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\entity\FraudCheckHistory.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\repository\FraudCheckRepository.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\dto\FraudChangeRequest.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\dto\FraudCheckResponse.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\exception\FraudException.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\exception\GlobalExceptionHandler.java
 C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\FraudServiceApplication.java
-C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\FraudController.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\service\FraudService.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\controller\FraudController.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\dto\BaseResponseDto.java
+C:\Users\uunal\IdeaProjects\TTPAY-bitbucket\Microservice-BE\fraud-service\src\main\java\com\microservice\fraudservice\dto\FraudCheckRequest.java

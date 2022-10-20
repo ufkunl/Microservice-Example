@@ -22,8 +22,8 @@ public class FraudCheckHistory {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private String id;
-    private String customerId;
     private Boolean isFraudster;
     private LocalDateTime createdAt;
+    private String email;
 
 }
