@@ -54,10 +54,7 @@ public class CustomerService {
         request.setEmail(customer.getEmail());
         request.setIsFraud(false);
         fraudClient.changeFraudStatus(request);
-
         log.info("new customer registration {}", customerRegistrationRequest);
-        //todo: check if email valid
-        //todo: check if email not taken
 
         NotificationRequest notification = new NotificationRequest();
         notification.setContent("Üyeliğiniz başarılı bir şekilde yapıldı.");

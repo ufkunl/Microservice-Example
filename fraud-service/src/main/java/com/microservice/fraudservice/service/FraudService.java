@@ -22,7 +22,7 @@ public class FraudService {
         this.fraudCheckRepository = fraudCheckRepository;
     }
 
-    public FraudCheckResponse isFraudulentCustomer(String email) throws FraudException {
+    public FraudCheckResponse isFraudulentCustomer(String email) {
         FraudCheckHistory fraudCheckHistory = fraudCheckRepository.findByEmail(email);
         if(fraudCheckHistory == null){
             return FraudCheckResponse.builder().isFraudster(false).build();
